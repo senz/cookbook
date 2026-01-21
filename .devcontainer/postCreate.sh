@@ -11,3 +11,14 @@ else
   echo "cook not found in PATH" >&2
   exit 1
 fi
+
+cd /workspaces/cookbook
+if command -v pre-commit >/dev/null 2>&1; then
+  pre-commit --version
+else
+  pip install pre-commit
+fi
+
+if [ -f "/workspaces/cookbook/.pre-commit-config.yaml" ]; then
+  pre-commit install --install-hooks
+fi

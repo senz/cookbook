@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: cook-doctor-validate
+        name: cook doctor validate --strict
+        entry: cook doctor validate --strict
+        language: system
+        files: \.cook$
+        pass_filenames: false
