@@ -24,4 +24,4 @@ jobs:
           configFile: .devcontainer/devcontainer.json
           imageName: ghcr.io/${{ github.repository }}/devcontainer
           cacheFrom: ghcr.io/${{ github.repository }}/devcontainer
-          push: true
+          runCmd: true
