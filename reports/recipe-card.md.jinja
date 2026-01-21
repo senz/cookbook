@@ -1,0 +1,13 @@
+**Порции:** {{ metadata.servings }}
+
+## Ингредиенты
+{%- for ingredient in ingredients %}
+- {{ ingredient.quantity }} {{ ingredient.unit }} {{ ingredient.name }}
+{%- endfor %}
+
+## Приготовление
+{% for section in sections %}
+{% for content in section %}
+{{ content }}
+{%- endfor %}
+{%- endfor %}
