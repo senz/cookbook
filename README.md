@@ -6,7 +6,7 @@ This repo is set up for the Cooklang "cookbook creation" flow.
 
 1. Open the dev container.
 2. Run the generator:
-   - `python3 /workspaces/cookbook/tools/create_cookbook.py /workspaces/cookbook cookbook.tex --title "My Cookbook" --author "Your Name"`
+   - `make generate`
 
 ## Build the PDF
 
@@ -16,3 +16,7 @@ This repo is set up for the Cooklang "cookbook creation" flow.
 ## Clean build artifacts
 
 - `make clean`
+
+## License
+
+Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International. See `LICENSE`.
