@@ -145,9 +145,11 @@ class CookbookGenerator:
     def generate_header(self):
         """Generate LaTeX document header."""
         header = r"""\documentclass[11pt,a4paper,twoside]{book}
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage{lmodern}
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setdefaultlanguage{english}
+\setotherlanguage{russian}
+\setmainfont{DejaVu Serif}
 \usepackage{textcomp}
 \usepackage{microtype}
 \usepackage{enumitem}
@@ -370,14 +372,14 @@ class CookbookGenerator:
 
         print(f"\n✅ Cookbook created: {output_file}")
         print("\n📖 To compile to PDF:")
-        print(f"  pdflatex {output_file}")
+        print(f"  xelatex {output_file}")
 
         if self.include_index:
             print(f"  makeindex {output_file[:-4]}.idx")
-            print(f"  pdflatex {output_file}")
+            print(f"  xelatex {output_file}")
 
-        print(f"  pdflatex {output_file}")
-        print("\n💡 Tip: Run pdflatex multiple times to ensure proper cross-references")
+        print(f"  xelatex {output_file}")
+        print("\n💡 Tip: Run xelatex multiple times to ensure proper cross-references")
 
         return True
 
