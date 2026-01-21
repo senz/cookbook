@@ -37,33 +37,25 @@ class CookbookGenerator:
     def get_recipe_latex(self, recipe_path):
         """Extract LaTeX content from a recipe using CookCLI."""
         try:
-            result = None
-
             # Try using installed 'cook' command
-            try:
+            result = subprocess.run(
+                ["cook", "recipe", "-f", "latex", str(recipe_path)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+
+            # If 'cook' not found, try cargo run as fallback
+            if result.returncode != 0 and "not found" in result.stderr:
                 result = subprocess.run(
-                    ["cook", "recipe", "-f", "latex", str(recipe_path)],
+                    ["cargo", "run", "--", "recipe", "-f", "latex", str(recipe_path)],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True
                 )
-            except FileNotFoundError:
-                result = None
-
-            # If 'cook' isn't available, try cargo run as fallback
-            if result is None:
-                try:
-                    result = subprocess.run(
-                        ["cargo", "run", "--", "recipe", "-f", "latex", str(recipe_path)],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                        text=True
-                    )
-                except FileNotFoundError:
-                    return self.parse_cooklang_recipe(recipe_path)
 
             if result.returncode != 0:
-                return self.parse_cooklang_recipe(recipe_path)
+                return None, {}
 
             content = result.stdout
 
@@ -96,7 +88,7 @@ class CookbookGenerator:
                         title_end_pos = title_end.end()
                     recipe_content = recipe_content[:title_start.start()] + recipe_content[title_end_pos:].lstrip()
             else:
-                return self.parse_cooklang_recipe(recipe_path)
+                return None, metadata
 
             return recipe_content, metadata
 
@@ -126,116 +118,6 @@ class CookbookGenerator:
 
         return metadata
 
-    def parse_cooklang_recipe(self, recipe_path):
-        """Fallback parser for Cooklang files when CookCLI isn't available."""
-        metadata = {}
-        content_lines = []
-
-        try:
-            raw = recipe_path.read_text(encoding="utf-8")
-        except Exception as e:
-            print(f"Error reading {recipe_path}: {e}", file=sys.stderr)
-            return None, {}
-
-        key_map = {
-            "description": "description",
-            "tags": "tags",
-            "servings": "servings",
-            "prep time": "prep_time",
-            "cook time": "cook_time",
-            "time": "cook_time",
-            "author": "author",
-            "source": "source",
-        }
-
-        for line in raw.splitlines():
-            stripped = line.strip()
-            if stripped.startswith(">>"):
-                meta_match = re.match(r">>\s*([^:]+):\s*(.+)", stripped)
-                if meta_match:
-                    key = meta_match.group(1).strip().lower().replace("-", " ")
-                    value = meta_match.group(2).strip()
-                    mapped_key = key_map.get(key, key.replace(" ", "_"))
-                    metadata[mapped_key] = value
-                continue
-
-            if not stripped:
-                content_lines.append("")
-                continue
-
-            if stripped.startswith("--"):
-                note = stripped.lstrip("-").strip()
-                content_lines.append(f"\\textit{{{self.escape_latex(note)}}}")
-                continue
-
-            content_lines.append(self.format_cooklang_line(stripped))
-
-        recipe_content = "\n".join(content_lines).strip()
-        return recipe_content, metadata
-
-    def format_cooklang_line(self, line):
-        """Convert a Cooklang line to LaTeX with basic token formatting."""
-        tokens = []
-
-        def replace_token(match):
-            token = match.group(0)
-            placeholder = f"TOKEN{len(tokens)}"
-            tokens.append((placeholder, token))
-            return placeholder
-
-        token_pattern = r'(@[^\s\{\},]+(\{[^}]*\})?)|(#[^\s\{\},]+(\{[^}]*\})?)|(~\{[^}]*\})'
-        temp = re.sub(token_pattern, replace_token, line)
-        escaped = self.escape_latex(temp)
-
-        for placeholder, token in tokens:
-            escaped = escaped.replace(
-                placeholder,
-                self.convert_cooklang_token(token)
-            )
-
-        return escaped
-
-    def convert_cooklang_token(self, token):
-        """Convert a single Cooklang token to LaTeX."""
-        def split_quantity(value):
-            parts = value.split("%", 1)
-            if len(parts) == 2:
-                quantity = parts[0].strip()
-                unit = parts[1].strip()
-                if unit:
-                    return f"{quantity} {unit}".strip()
-                return quantity
-            return value.strip()
-
-        if token.startswith("@"):
-            name, quantity = self.parse_token_with_quantity(token[1:])
-            latex = f"\\ingredient{{{self.escape_latex(name)}}}"
-            if quantity:
-                latex += f" ({self.escape_latex(split_quantity(quantity))})"
-            return latex
-
-        if token.startswith("#"):
-            name, quantity = self.parse_token_with_quantity(token[1:])
-            latex = f"\\cookware{{{self.escape_latex(name)}}}"
-            if quantity:
-                latex += f" ({self.escape_latex(split_quantity(quantity))})"
-            return latex
-
-        if token.startswith("~"):
-            name, _ = self.parse_token_with_quantity(token[1:])
-            timer_value = split_quantity(name)
-            return f"\\timer{{{self.escape_latex(timer_value)}}}"
-
-        return self.escape_latex(token)
-
-    def parse_token_with_quantity(self, token):
-        """Split a Cooklang token into name and optional quantity."""
-        if "{" in token and token.endswith("}"):
-            name, remainder = token.split("{", 1)
-            quantity = remainder[:-1].strip()
-            return name, quantity
-        return token, ""
-
     def scan_recipes(self, recipe_dir):
         """Scan directory for .cook files and organize by chapter."""
         recipe_path = Path(recipe_dir)
@@ -263,11 +145,9 @@ class CookbookGenerator:
     def generate_header(self):
         """Generate LaTeX document header."""
         header = r"""\documentclass[11pt,a4paper,twoside]{book}
-\usepackage{fontspec}
-\usepackage{polyglossia}
-\setdefaultlanguage{english}
-\setotherlanguage{russian}
-\setmainfont{DejaVu Serif}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
 \usepackage{textcomp}
 \usepackage{microtype}
 \usepackage{enumitem}
@@ -490,13 +370,13 @@ class CookbookGenerator:
 
         print(f"\n✅ Cookbook created: {output_file}")
         print("\n📖 To compile to PDF:")
-        print(f"  xelatex {output_file}")
+        print(f"  pdflatex {output_file}")
 
         if self.include_index:
             print(f"  makeindex {output_file[:-4]}.idx")
-            print(f"  xelatex {output_file}")
+            print(f"  pdflatex {output_file}")
 
-        print(f"  xelatex {output_file}")
+        print(f"  pdflatex {output_file}")
         print("\n💡 Tip: Run pdflatex multiple times to ensure proper cross-references")
 
         return True
