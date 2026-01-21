@@ -147,8 +147,8 @@ class CookbookGenerator:
         header = r"""\documentclass[11pt,a4paper,twoside]{book}
 \usepackage{fontspec}
 \usepackage{polyglossia}
-\setdefaultlanguage{english}
-\setotherlanguage{russian}
+\setdefaultlanguage{russian}
+\setotherlanguage{english}
 \setmainfont{DejaVu Serif}
 \usepackage{textcomp}
 \usepackage{microtype}
@@ -187,7 +187,7 @@ class CookbookGenerator:
         if self.include_index:
             header += r"""
 % Index setup
-\makeindex[columns=2, title=Recipe Index, intoc]"""
+\makeindex[columns=2, title=Указатель рецептов, intoc]"""
 
         header += r"""
 
