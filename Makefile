@@ -20,3 +20,4 @@ index:
 
 clean:
 	rm -f *.aux *.idx *.ilg *.ind *.log *.out *.toc
+	rm -rf tex tex.*
