@@ -1,0 +1,14 @@
+{
+  "name": "cookbook-creator-prebuild",
+  "image": "ghcr.io/senz/cookbook/devcontainer:latest",
+  "workspaceFolder": "/workspaces/cookbook",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "dubadub.Cooklang"
+      ]
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/postCreate.sh"
+}
