@@ -2,7 +2,7 @@ TEX ?= cookbook.tex
 NAME := $(basename $(TEX))
 GEN_SCRIPT ?= /workspaces/cookbook/tools/create_cookbook.py
 TITLE ?= My Cookbook
-AUTHOR ?= Your Name
+AUTHOR ?= Kosta
 
 .PHONY: generate pdf index clean
 
